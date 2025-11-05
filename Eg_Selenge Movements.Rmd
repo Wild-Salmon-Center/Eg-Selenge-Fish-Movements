@@ -1,0 +1,50 @@
+---
+title: "Eg_Selenge Fish Movements"
+author: "J.Hart"
+date: "2025-11-05"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# Attach packages
+library(tidyverse)
+library(sf)
+library(forcats)
+library(readxl)
+library(riverdist)
+library(janitor)
+```
+
+```{r}
+# Read in taimen movements & filter for > 1 aquisitions
+taimen <- read_excel("Taimen_Movements_Eg_Selenge.xlsx") %>% 
+  clean_names() %>% 
+  group_by(code) %>%
+  filter(n() > 1) %>%
+  ungroup()
+
+```
+
+```{r}
+# Convert to sf object and project to UTM
+taimen_sf <- st_as_sf(taimen, coords = c("long_adjusted", "lat_adjusted")) %>%
+  st_set_crs(4326) %>% 
+  st_transform(crs = 32648)
+
+# Find max euclidian distance
+distances <- taimen_sf %>%
+  group_by(code) %>% 
+  summarize(
+    max_dist_m = max(st_distance(geometry, geometry)))
+  
+```
+
+```{r}
+
+```
+
+
