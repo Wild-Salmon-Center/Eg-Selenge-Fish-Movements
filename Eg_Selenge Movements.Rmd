@@ -44,7 +44,44 @@ distances <- taimen_sf %>%
 ```
 
 ```{r}
+# Load river network
+MyRivernetwork <- line2network(path ="Spatial", layer ="FlowNetwork_Final")
+
+# Confirm river network looks accurate
+plot(MyRivernetwork)
+
+# Show network segments
+showends(seg=1, rivers=MyRivernetwork)
+showends(seg=2, rivers=MyRivernetwork)
+
+# Define start of river network
+riv <- setmouth(seg=1,vert=22362,rivers=MyRivernetwork)
+plot(riv)
+
+# Run and perform topology checks on river network
+network_clean <- cleanup(riv)
+
+# Verify river network segmented correctly
+topologydots(rivers=network_clean)
+
 
 ```
 
+```{r}
+fish_riv <- xy2segvert(x=taimen$lat_adjusted, y=taimen$long_adjusted, rivers=network_clean)
+
+taimen_locs <- pointshp2segvert(path ="Spatial", layer ="Taimen", rivers=network_clean) %>% 
+  filter(Code == "102")
+
+taimen_locs.ID <- taimen_locs$Unique_ID
+
+distance_matrix <- riverdistancemat(seg = taimen_locs$seg, vert = taimen_locs$vert, ID=taimen_locs.ID, rivers = network_clean)
+max_distance <- max(distance_matrix)
+
+zoomtoseg(seg=1, rivers=network_clean)
+points(taimen_loc$snap_x, taimen_loc$snap_y, pch=16, col="red")
+riverpoints(seg=taimen_loc$seg, vert=taimen_loc$vert, rivers=network_clean, pch=15, 
+            col="blue")
+
+```
 
