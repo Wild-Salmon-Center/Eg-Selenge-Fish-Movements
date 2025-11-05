@@ -139,3 +139,17 @@ ggplot(taimen_maxrivdist, aes(x = reorder(as.factor(id),max_river_distance_km), 
 
 ```
 
+```{r}
+# Calculating observed minimum home range for all individuals
+
+taimen_locs <- pointshp2segvert(path ="Spatial", layer ="Taimen", rivers=network_clean) 
+
+# Minimum home range (m)
+par(mfrow=c(1,2))
+ranges <- homerange(unique=taimen_locs$Code, seg=taimen_locs$seg, vert=taimen_locs$vert, rivers=network_clean)
+
+# Plot home range
+plot(ranges, cumulative=TRUE, label=TRUE)
+
+```
+
