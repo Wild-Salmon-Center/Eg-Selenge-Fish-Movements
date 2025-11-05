@@ -85,6 +85,8 @@ euc_distances <- taimen_sf %>%
   summarize(
     max_dist_m = max(st_distance(geometry, geometry)))
 
+#-----------------------------------------------
+
 ## River Distances
 
 # Read in taimen location acquisitions
@@ -92,7 +94,7 @@ taimen_riv <- xy2segvert(x=taimen$latitude, y=taimen$longitude, rivers=network_c
 
 # Snap point locations to cleaned river network
 taimen_locs <- pointshp2segvert(path ="Spatial", layer ="Taimen", rivers=network_clean) %>% 
-  filter(Code == "102")
+  filter(Code == "154")
 
 # Array of acquisition IDs for distance matrix
 taimen_locs.ID <- taimen_locs$Unique_ID
@@ -100,14 +102,36 @@ taimen_locs.ID <- taimen_locs$Unique_ID
 # Calculate distances between each location ping
 distance_matrix <- riverdistancemat(seg = taimen_locs$seg, vert = taimen_locs$vert, ID=taimen_locs.ID, rivers = network_clean)
 # Calculate max river distance
-max_distance <- max(distance_matrix)
+max_distance_km <- max(distance_matrix) / 1000
 
 
 # View point locations on network
 zoomtoseg(seg=1, rivers=network_clean)
 points(taimen_locs$snap_x, taimen_locs$snap_y, pch=16, col="red")
-riverpoints(seg=taimen_locs$seg, vert=taimen_locs$vert, rivers=network_clean, pch=15, 
-            col="blue")
+riverpoints(seg=taimen_locs$seg, vert=taimen_locs$vert, rivers=network_clean, pch=15, col="blue")
+
+```
+
+```{r}
+taimen_maxrivdist <- read_excel("Taimen_MaxDistances.xlsx") %>% 
+  clean_names()
+
+ggplot(taimen_maxrivdist, aes(x = reorder(as.factor(id),max_river_distance_km), y = max_river_distance_km, fill = crossed_dam_site)) +
+  geom_col() +
+  scale_fill_manual(values = c("deepskyblue3", "coral2")) +
+  scale_y_continuous(expand = c(0,0), limits = c(0, 260)) +
+  labs(title = "Taimen Tracking Maximum Displacement",
+       subtitle = "Selenge/Eg Rivers",
+       y = "River KM",
+       x = "Taimen Tag ID",
+       fill = "Crossed Proposed Egiin Gol Hydroelectric Site") +
+  theme_bw() +
+  theme(legend.position = "bottom",
+        plot.subtitle = element_text(size = 14),
+        plot.title = element_text(size= 16, face="bold"),
+        axis.text=element_text(size= 10),
+        axis.title=element_text(size= 12)) 
+      
 
 ```
 
