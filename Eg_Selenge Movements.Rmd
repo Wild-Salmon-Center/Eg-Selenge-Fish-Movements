@@ -13,37 +13,37 @@ knitr::opts_chunk$set(echo = TRUE)
 # Attach packages
 library(tidyverse)
 library(sf)
-library(forcats)
 library(readxl)
 library(riverdist)
 library(janitor)
 ```
 
 ```{r Read in data}
-# Read in taimen movements & filter for > 1 aquisitions
+# Read in taimen movements & filter for > 1 acquisitions
+
 taimen <- read_excel("Taimen_Movements_Eg_Selenge.xlsx") %>% 
   clean_names() %>% 
-  group_by(code) %>%
+  group_by(fish_id) %>%
   filter(n() > 1) %>%
   ungroup()
 
 ```
 
-```{r}
+```{r Calculate euclidian distances}
 # Convert to sf object and project to UTM
-taimen_sf <- st_as_sf(taimen, coords = c("long_adjusted", "lat_adjusted")) %>%
+taimen_sf <- st_as_sf(taimen, coords = c("longitude", "latitude")) %>%
   st_set_crs(4326) %>% 
   st_transform(crs = 32648)
 
-# Find max euclidian distance
+# Find max euclidean distance
 distances <- taimen_sf %>%
-  group_by(code) %>% 
+  group_by(fish_id) %>% 
   summarize(
     max_dist_m = max(st_distance(geometry, geometry)))
   
 ```
 
-```{r}
+```{r Load river network}
 # Load river network
 MyRivernetwork <- line2network(path ="Spatial", layer ="FlowNetwork_Final")
 
@@ -67,20 +67,27 @@ topologydots(rivers=network_clean)
 
 ```
 
-```{r}
-fish_riv <- xy2segvert(x=taimen$lat_adjusted, y=taimen$long_adjusted, rivers=network_clean)
+```{r Calculate river distances}
+# Read in taimen location acquisitions
+taimen_riv <- xy2segvert(x=taimen$latitude, y=taimen$longitude, rivers=network_clean)
 
+# Snap point locations to cleaned river network
 taimen_locs <- pointshp2segvert(path ="Spatial", layer ="Taimen", rivers=network_clean) %>% 
   filter(Code == "102")
 
+# Array of acquisition IDs for distance matrix
 taimen_locs.ID <- taimen_locs$Unique_ID
 
+# Calculate distances between each location ping
 distance_matrix <- riverdistancemat(seg = taimen_locs$seg, vert = taimen_locs$vert, ID=taimen_locs.ID, rivers = network_clean)
+# Calculate max river distance
 max_distance <- max(distance_matrix)
 
+
+# View point locations on network
 zoomtoseg(seg=1, rivers=network_clean)
-points(taimen_loc$snap_x, taimen_loc$snap_y, pch=16, col="red")
-riverpoints(seg=taimen_loc$seg, vert=taimen_loc$vert, rivers=network_clean, pch=15, 
+points(taimen_locs$snap_x, taimen_locs$snap_y, pch=16, col="red")
+riverpoints(seg=taimen_locs$seg, vert=taimen_locs$vert, rivers=network_clean, pch=15, 
             col="blue")
 
 ```
