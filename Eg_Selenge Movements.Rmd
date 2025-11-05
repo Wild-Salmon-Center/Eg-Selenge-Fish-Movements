@@ -19,7 +19,7 @@ library(riverdist)
 library(janitor)
 ```
 
-```{r}
+```{r Read in data}
 # Read in taimen movements & filter for > 1 aquisitions
 taimen <- read_excel("Taimen_Movements_Eg_Selenge.xlsx") %>% 
   clean_names() %>% 
