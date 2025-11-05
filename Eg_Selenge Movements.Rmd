@@ -16,6 +16,8 @@ library(sf)
 library(readxl)
 library(riverdist)
 library(janitor)
+library(maptiles)
+library(tidyterra)
 ```
 
 ```{r Read in data}
@@ -29,18 +31,24 @@ taimen <- read_excel("Taimen_Movements_Eg_Selenge.xlsx") %>%
 
 ```
 
-```{r Calculate euclidian distances}
+```{r Read in data as spatial object and map}
 # Convert to sf object and project to UTM
 taimen_sf <- st_as_sf(taimen, coords = c("longitude", "latitude")) %>%
   st_set_crs(4326) %>% 
   st_transform(crs = 32648)
 
-# Find max euclidean distance
-distances <- taimen_sf %>%
-  group_by(fish_id) %>% 
-  summarize(
-    max_dist_m = max(st_distance(geometry, geometry)))
-  
+# Get basemap tiles for reference
+tiles <- get_tiles(taimen_sf, provider = "OpenStreetMap", crop=TRUE)
+plot_tiles(basemap_tiles)
+
+# Plot locations
+ggplot() +
+  geom_spatraster_rgb(data = tiles) +
+  geom_sf(data = taimen_sf, color = "blue") +
+  labs(title = "Taimen Movement Locations - Eg/Selenge") +
+  theme_minimal()
+
+
 ```
 
 ```{r Load river network}
@@ -67,7 +75,18 @@ topologydots(rivers=network_clean)
 
 ```
 
-```{r Calculate river distances}
+```{r Calculate distances}
+
+## Euclidean Distances
+
+# Find max euclidean distance
+euc_distances <- taimen_sf %>%
+  group_by(fish_id) %>% 
+  summarize(
+    max_dist_m = max(st_distance(geometry, geometry)))
+
+## River Distances
+
 # Read in taimen location acquisitions
 taimen_riv <- xy2segvert(x=taimen$latitude, y=taimen$longitude, rivers=network_clean)
 
