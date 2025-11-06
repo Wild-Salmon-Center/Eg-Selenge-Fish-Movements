@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r}
+```{r Attach packages}
 # Attach packages
 library(tidyverse)
 library(sf)
@@ -18,13 +18,18 @@ library(riverdist)
 library(janitor)
 library(maptiles)
 library(tidyterra)
+library(ggpattern)
 ```
 
 ```{r Read in data}
-# Read in taimen movements & filter for > 1 acquisitions
 
-taimen <- read_excel("Taimen_Movements_Eg_Selenge.xlsx") %>% 
-  clean_names() %>% 
+# Read in all fish movements 
+allfish <- read.csv("All Fish Movements_Eg_Selenge.csv") %>% 
+  clean_names() 
+
+# Filter for only taimen observations & > 1 location acquisitions
+taimen <- allfish %>%
+  filter(species == "Taimen") %>% 
   group_by(fish_id) %>%
   filter(n() > 1) %>%
   ungroup()
@@ -32,20 +37,27 @@ taimen <- read_excel("Taimen_Movements_Eg_Selenge.xlsx") %>%
 ```
 
 ```{r Read in data as spatial object and map}
-# Convert to sf object and project to UTM
-taimen_sf <- st_as_sf(taimen, coords = c("longitude", "latitude")) %>%
+
+# Convert all fish movements to sf object and project to UTM
+allfish_sf <- st_as_sf(allfish, coords = c("long_map_adjusted", "lat_map_adjusted")) %>%
   st_set_crs(4326) %>% 
-  st_transform(crs = 32648)
+  st_transform(crs = 32648) # Project WGS84 UTM Zone 48N
+
+
+# Convert taimen movements to sf object and project to UTM
+taimen_sf <- st_as_sf(taimen, coords = c("long_map_adjusted", "lat_map_adjusted")) %>%
+  st_set_crs(4326) %>% 
+  st_transform(crs = 32648) # Project WGS84 UTM Zone 48N
 
 # Get basemap tiles for reference
 tiles <- get_tiles(taimen_sf, provider = "OpenStreetMap", crop=FALSE)
 #plot_tiles(tiles)
 
-# Plot locations
+# Plot taimen locations for visual check
 ggplot() +
   geom_spatraster_rgb(data = tiles) +
   geom_sf(data = taimen_sf, color = "blue") +
-  labs(title = "Taimen MovementY Locations - Eg/Selenge") +
+  labs(title = "Taimen Movement Locations - Eg/Selenge") +
   theme_minimal()
 
 
@@ -115,13 +127,17 @@ riverpoints(seg=taimen_locs$seg, vert=taimen_locs$vert, rivers=network_clean, pc
 
 ```
 
-```{r}
-# Read in taimen max river distance data
-taimen_maxrivdist <- read_excel("Taimen_MaxDistances.xlsx") %>% 
-  clean_names()
+```{r max displacement plot}
+
+# Fish that swam between proposed Eg hydro project site
+crossed_dam_site <- c("102", "152", "153", "154", "159")
+
+max_river_distance <- max_river_distance %>% 
+  mutate(crossed_dam = ifelse(id %in% crossed_dam_site, "Yes", "No"))
+
 
 # Create max displacement plot
-ggplot(taimen_maxrivdist, aes(x = reorder(as.factor(id),max_river_distance_km), y = max_river_distance_km, fill = crossed_dam_site)) +
+ggplot(max_river_distance, aes(x = reorder(as.factor(id),max_river_distance_km), y = max_river_distance_km, fill = crossed_dam)) +
   geom_col() +
   scale_fill_manual(values = c("deepskyblue3", "coral2")) +
   scale_y_continuous(expand = c(0,0), limits = c(0, 260)) +
@@ -137,11 +153,11 @@ ggplot(taimen_maxrivdist, aes(x = reorder(as.factor(id),max_river_distance_km), 
         axis.text=element_text(size= 10),
         axis.title=element_text(size= 12)) 
 
-# ggsave(filename = "Taimen_MaxDisplacement_Plot.png")
 
+#ggsave(filename = "Taimen_MaxDisplacement_Plot.png", height = 6, width = 8)
 ```
 
-```{r}
+```{r Home range}
 # Calculating observed minimum home range for all individuals
 
 taimen_locs <- pointshp2segvert(path ="Spatial", layer ="Taimen", rivers=network_clean) 
@@ -155,7 +171,7 @@ plot(ranges, cumulative=TRUE, label=TRUE)
 
 ```
 
-```{r}
+```{r Date seq distances}
 ## Distance between locations pings - date sequence
 
 # Filter for unique ID of interest
@@ -183,4 +199,63 @@ ggplot(distance_dateseq, aes(x = as.factor(date), y = dist_km, group = 1)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
+```{r All fish plot movements}
+## All fish movement plot
+
+# Filter for >1 location acquistions
+allfish <- read.csv("All Fish Movements_Eg_Selenge.csv") %>% 
+  clean_names() %>% 
+  group_by(fish_id) %>%
+  filter(n() > 1) %>%
+  ungroup()
+
+# Unique id labels
+id_vec <- unique(allfish$fish_id)
+
+# Create empty data frame for max displacement results
+max_river_distance_all <- data.frame(id = character(), max_river_distance_km = numeric(), stringsAsFactors = FALSE)
+
+
+# Calculate max displacement 
+for (i in id_vec) {
+  allfish_locs <- pointshp2segvert(path ="Spatial", layer ="AllFish", rivers=network_clean) %>% 
+    filter(Code == i)
+  distance_matrix <- riverdistancemat(seg =  allfish_locs$seg, vert =  allfish_locs$vert, rivers = network_clean) # Calculate distances between each location ping 
+  max_distance_km <- max(distance_matrix) / 1000 # Calculate max river distance in km
+  new_row <- data.frame(id = paste(i), max_river_distance_km = max_distance_km) 
+  max_river_distance_all <- rbind(max_river_distance_all, new_row) # Append to results table
+  }
+
+max_river_distance_all <- max_river_distance_all %>% 
+  mutate(crossed_dam = ifelse(id %in% crossed_dam_site, "Yes", "No"))
+
+
+
+allfish_plotdata <- read_csv("max_river_distance_allfish.csv")
+species_colors <- c("firebrick1", "yellow2", "chocolate", "green3", "white")
+
+# Create max displacement plot
+ggplot(allfish_plotdata, aes(x = reorder(as.factor(id),max_river_distance_km), y = max_river_distance_km,fill = species, pattern = crossed_dam)) +
+  geom_col_pattern(color = "black", size=.75) +
+  scale_pattern_manual(values = c("Yes" = "stripe", "No" = "none")) +
+  scale_fill_manual(values = species_colors) +
+  scale_y_continuous(expand = c(0,0), limits = c(0, 260)) +
+  labs(title = "Fish Tracking Maximum Displacement",
+       subtitle = "Selenge/Eg Rivers",
+       y = "River KM",
+       x = "FishTag ID",
+       pattern = "Crossed Proposed Egiin Gol Hydroelectric Site",
+       fill = "Species") +
+  theme_bw() +
+  theme(legend.position = "bottom",
+        plot.subtitle = element_text(size = 16),
+        plot.title = element_text(size= 18, face="bold"),
+        axis.text=element_text(size= 14),
+        axis.title=element_text(size= 16),
+        axis.text.x = element_text(angle = 45, hjust = 1)) 
+
+
+ggsave(filename = "AllFish_MaxDisplacement_Plot.png", height = 6, width = 10)
+
+```
 
