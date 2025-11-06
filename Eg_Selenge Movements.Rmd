@@ -38,14 +38,14 @@ taimen_sf <- st_as_sf(taimen, coords = c("longitude", "latitude")) %>%
   st_transform(crs = 32648)
 
 # Get basemap tiles for reference
-tiles <- get_tiles(taimen_sf, provider = "OpenStreetMap", crop=TRUE)
-plot_tiles(basemap_tiles)
+tiles <- get_tiles(taimen_sf, provider = "OpenStreetMap", crop=FALSE)
+#plot_tiles(tiles)
 
 # Plot locations
 ggplot() +
   geom_spatraster_rgb(data = tiles) +
   geom_sf(data = taimen_sf, color = "blue") +
-  labs(title = "Taimen Movement Locations - Eg/Selenge") +
+  labs(title = "Taimen MovementY Locations - Eg/Selenge") +
   theme_minimal()
 
 
@@ -93,7 +93,7 @@ euc_distances <- taimen_sf %>%
 id_vec <- unique(taimen$fish_id)
 
 # Create empty data frame for max displacement results
-max_distance_df <- data.frame(id = character(), max_river_distance_km = numeric(), stringsAsFactors = FALSE)
+max_river_distance <- data.frame(id = character(), max_river_distance_km = numeric(), stringsAsFactors = FALSE)
 
 # Calculate max displacement 
 for (i in id_vec) {
@@ -103,7 +103,7 @@ for (i in id_vec) {
   distance_matrix <- riverdistancemat(seg = taimen_locs$seg, vert = taimen_locs$vert, rivers = network_clean) # Calculate distances between each location ping 
   max_distance_km <- max(distance_matrix) / 1000 # Calculate max river distance in km
   new_row <- data.frame(id = paste(i), max_river_distance_km = max_distance_km) 
-  max_distance_df <- rbind(max_distance_df, new_row) # Append to results table
+  max_river_distance <- rbind(max_river_distance, new_row) # Append to results table
   
 }
   
@@ -154,4 +154,33 @@ ranges <- homerange(unique=taimen_locs$Code, seg=taimen_locs$seg, vert=taimen_lo
 plot(ranges, cumulative=TRUE, label=TRUE)
 
 ```
+
+```{r}
+## Distance between locations pings - date sequence
+
+# Filter for unique ID of interest
+taimen_locs <- pointshp2segvert(path ="Spatial", layer ="Taimen", rivers=network_clean) %>% 
+  filter(Code == 104) %>% 
+  arrange(Code, Date) 
+
+# Calculate sequential date distances
+distance_dateseq <- riverdistanceseq(unique=taimen_locs$Code, survey=taimen_locs$Survey,
+      seg=taimen_locs$seg, vert=taimen_locs$vert, rivers=network_clean) %>% 
+      pivot_longer( 
+             cols = everything(),
+             names_to = "date",
+             values_to = "distance") %>% 
+      mutate(dist_km = distance / 1000)
+
+# Plot
+labels <- taimen_locs$Date[-1]
+
+ggplot(distance_dateseq, aes(x = as.factor(date), y = dist_km, group = 1)) + 
+  geom_path(linewidth = 1) +
+  scale_x_discrete(labels = labels) +
+  labs(x = "Date",
+       y = "Distance (km)") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
 
