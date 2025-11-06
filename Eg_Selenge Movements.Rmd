@@ -137,7 +137,7 @@ ggplot(taimen_maxrivdist, aes(x = reorder(as.factor(id),max_river_distance_km), 
         axis.text=element_text(size= 10),
         axis.title=element_text(size= 12)) 
 
-ggsave(filename = "Taimen_MaxDisplacement_Plot.png")
+# ggsave(filename = "Taimen_MaxDisplacement_Plot.png")
 
 ```
 
