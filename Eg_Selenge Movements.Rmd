@@ -235,8 +235,8 @@ allfish_plotdata <- read_csv("max_river_distance_allfish.csv")
 species_colors <- c("firebrick1", "yellow2", "chocolate", "green3", "white")
 
 # Create max displacement plot
-ggplot(allfish_plotdata, aes(x = reorder(as.factor(id),max_river_distance_km), y = max_river_distance_km,fill = species, pattern = crossed_dam)) +
-  geom_col_pattern(color = "black", size=.75) +
+ggplot(allfish_plotdata, aes(x = reorder(as.factor(id),max_river_distance_km), y = max_river_distance_km, fill = species, pattern = crossed_dam)) +
+  geom_col_pattern(linewidth=0.5, color = "black") +
   scale_pattern_manual(values = c("Yes" = "stripe", "No" = "none")) +
   scale_fill_manual(values = species_colors) +
   scale_y_continuous(expand = c(0,0), limits = c(0, 260)) +
@@ -252,7 +252,12 @@ ggplot(allfish_plotdata, aes(x = reorder(as.factor(id),max_river_distance_km), y
         plot.title = element_text(size= 18, face="bold"),
         axis.text=element_text(size= 14),
         axis.title=element_text(size= 16),
-        axis.text.x = element_text(angle = 45, hjust = 1)) 
+        axis.text.x = element_text(angle = 45, hjust = 1)) +
+        guides(fill = guide_legend(override.aes = list(pattern = "none")),
+               pattern = guide_legend(override.aes = list(
+                 pattern_density = 0.25, 
+                 pattern_spacing = 0.02,
+                 fill = 'white')))
 
 
 ggsave(filename = "AllFish_MaxDisplacement_Plot.png", height = 6, width = 10)
