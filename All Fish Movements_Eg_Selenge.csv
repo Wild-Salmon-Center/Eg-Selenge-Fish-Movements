@@ -1,4 +1,4 @@
-﻿Date,Latitude,Longitude,Species,Lat_MapAdjusted,Long_MapAdjusted,ID_Species,Fish_ID,Location Aquistion Number,Unique_Acquistion_ID
+﻿Date,Latitude,Longitude,Species,Lat_MapAdjusted,Long_MapAdjusted,ID_Species,Fish_ID,Geolocation_Numb,Unique_Acquistion_ID
 2/26/2015 0:00,49.4061,103.63934,Taimen,49.40625127,103.6390766,102-Taimen,102,3,102C
 7/5/2015 0:00,50.27391,101.95381,Taimen,50.2739809,101.9538069,102-Taimen,102,10,102J
 4/21/2015 0:00,49.40494444,103.63777,Taimen,49.40514192,103.6374634,102-Taimen,102,4,102D

@@ -11,21 +11,19 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r Attach packages}
 # Attach packages
-library(tidyverse)
-library(sf)
-library(readxl)
-library(riverdist)
-library(janitor)
-library(maptiles)
-library(tidyterra)
-library(ggpattern)
+
+#install.packages("pacman")
+library(pacman)
+
+pacman::p_load(tidyverse, sf, readxl, riverdist, janitor, maptiles, tidyterra, ggpattern, lubridate)
 ```
 
 ```{r Read in data}
 
 # Read in all fish movements 
-allfish <- read.csv("All Fish Movements_Eg_Selenge.csv") %>% 
-  clean_names() 
+allfish <- read_csv("All Fish Movements_Eg_Selenge.csv")%>% 
+  clean_names() %>% 
+  mutate(date = mdy_hm(date)) # convert to date type
 
 # Filter for only taimen observations & > 1 location acquisitions
 taimen <- allfish %>%
@@ -35,6 +33,30 @@ taimen <- allfish %>%
   ungroup()
 
 ```
+
+```{r Calculate # of geolocations and months range}
+
+# Number of geolocations per fish (filter out only 1 geolocation)
+numb_geolocations <- allfish %>% 
+  group_by(fish_id) %>% 
+  summarize(count = n()) %>% 
+  filter(count > 1) %>% 
+  rename(id = fish_id)
+
+# Number of months between first and last geolocation
+months_range <- allfish %>% 
+  group_by(fish_id) %>% 
+  filter(n() > 1) %>%
+  rename(id = fish_id) %>% 
+  arrange(id, date) %>% 
+  summarize(min_date = min(date),
+            max_date = max(date)) %>% 
+  mutate(days = interval(min_date, max_date) %/% days (1)) %>% 
+  mutate(partial_months = round(days / (365/12), digits = 1),
+         whole_months = round(partial_months, digits = 0))
+```
+
+
 
 ```{r Read in data as spatial object and map}
 
@@ -230,28 +252,44 @@ max_river_distance_all <- max_river_distance_all %>%
   mutate(crossed_dam = ifelse(id %in% crossed_dam_site, "Yes", "No"))
 
 
+# Read in all fish plot data and append geolocation count and date range
+allfish_plotdata <- read_csv("max_river_distance_allfish.csv") %>% 
+  cbind(numb_geolocations$count, months_range$whole_months) 
 
-allfish_plotdata <- read_csv("max_river_distance_allfish.csv")
-species_colors <- c("firebrick1", "yellow2", "chocolate", "green3", "white")
+# Create color vector for different species
+species_colors <- c("royalblue1", "yellow2", "chocolate", "olivedrab3", "white")
 
 # Create max displacement plot
-ggplot(allfish_plotdata, aes(x = reorder(as.factor(id),max_river_distance_km), y = max_river_distance_km, fill = species, pattern = crossed_dam)) +
-  geom_col_pattern(linewidth=0.5, color = "black") +
+ggplot(allfish_plotdata, aes(x = reorder(as.factor(id),max_river_distance_km), 
+                             y = max_river_distance_km, 
+                             fill = species, 
+                             pattern = crossed_dam)) +
+  geom_col_pattern(linewidth=0.7, 
+                   color = "black",
+                   pattern_spacing = 0.03,
+                   pattern_fill = "gray45") +
   scale_pattern_manual(values = c("Yes" = "stripe", "No" = "none")) +
   scale_fill_manual(values = species_colors) +
-  scale_y_continuous(expand = c(0,0), limits = c(0, 260)) +
-  labs(title = "Fish Tracking Maximum Displacement",
-       subtitle = "Selenge/Eg Rivers",
+  scale_y_continuous(expand = c(0,0), limits = c(0, 280), breaks = seq(0,250, by=50)) +
+  labs(#title = "Fish Tracking Maximum Displacement",
+       #subtitle = "Selenge/Eg Rivers",
        y = "River KM",
-       x = "FishTag ID",
-       pattern = "Crossed Proposed Egiin Gol Hydroelectric Site",
-       fill = "Species") +
+       x = "Fish Tag ID",
+       pattern = "Crossed Proposed Egiin Gol Hydroelectric Site:",
+       fill = "Species:") +
+  geom_text(aes(label = paste0("(",months_range$partial_months,")")), 
+            vjust = -0.5,
+            size = 3.5) +
+  geom_text(aes(label = numb_geolocations$count), 
+            vjust = -2, 
+            fontface = "bold",
+            size = 3.5) +
   theme_bw() +
   theme(legend.position = "bottom",
         plot.subtitle = element_text(size = 16),
         plot.title = element_text(size= 18, face="bold"),
-        axis.text=element_text(size= 14),
-        axis.title=element_text(size= 16),
+        axis.text=element_text(size= 13),
+        axis.title=element_text(size= 14),
         axis.text.x = element_text(angle = 45, hjust = 1)) +
         guides(fill = guide_legend(override.aes = list(pattern = "none")),
                pattern = guide_legend(override.aes = list(
@@ -260,7 +298,7 @@ ggplot(allfish_plotdata, aes(x = reorder(as.factor(id),max_river_distance_km), y
                  fill = 'white')))
 
 
-ggsave(filename = "AllFish_MaxDisplacement_Plot.png", height = 6, width = 10)
+ggsave(filename = "AllFish_MaxDisplacement_Plot.png", height = 6, width = 12)
 
 ```
 
