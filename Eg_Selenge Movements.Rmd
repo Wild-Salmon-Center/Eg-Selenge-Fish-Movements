@@ -21,7 +21,7 @@ pacman::p_load(tidyverse, sf, readxl, riverdist, janitor, maptiles, tidyterra, g
 ```{r Read in data}
 
 # Read in all fish movements 
-allfish <- read_csv("All Fish Movements_Eg_Selenge.csv")%>% 
+allfish <- read_csv("Final Data Sheets/All Fish Movements_Eg_Selenge.csv")%>% 
   clean_names() %>% 
   mutate(date = mdy_hm(date)) # convert to date type
 
@@ -55,8 +55,6 @@ months_range <- allfish %>%
   mutate(partial_months = round(days / (365/12), digits = 1),
          whole_months = round(partial_months, digits = 0))
 ```
-
-
 
 ```{r Read in data as spatial object and map}
 
@@ -225,7 +223,7 @@ ggplot(distance_dateseq, aes(x = as.factor(date), y = dist_km, group = 1)) +
 ## All fish movement plot
 
 # Filter for >1 location acquistions
-allfish <- read.csv("All Fish Movements_Eg_Selenge.csv") %>% 
+allfish <- read.csv("Final Data Sheets/All Fish Movements_Eg_Selenge.csv") %>% 
   clean_names() %>% 
   group_by(fish_id) %>%
   filter(n() > 1) %>%
@@ -253,7 +251,7 @@ max_river_distance_all <- max_river_distance_all %>%
 
 
 # Read in all fish plot data and append geolocation count and date range
-allfish_plotdata <- read_csv("max_river_distance_allfish.csv") %>% 
+allfish_plotdata <- read_csv("Final Data Sheets/max_river_distance_allfish.csv") %>% 
   cbind(numb_geolocations$count, months_range$whole_months) 
 
 # Create color vector for different species
