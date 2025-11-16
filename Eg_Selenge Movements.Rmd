@@ -282,6 +282,22 @@ ggplot(allfish_plotdata, aes(x = reorder(as.factor(id),max_river_distance_km),
             vjust = -2, 
             fontface = "bold",
             size = 4) +
+ annotate("curve", 
+           x = 16.5, y = 170, 
+           xend = 18.4, yend = 162, 
+           arrow = arrow(length = unit(0.3, "cm"), type = "closed"), 
+           curvature = 0.1, # Adjust the curve direction and strength
+           color = "black", 
+           size = 1) +
+ annotate("curve", 
+           x = 16.5, y = 195, 
+           xend = 18.6, yend = 175, 
+           arrow = arrow(length = unit(0.3, "cm"), type = "closed"), 
+           curvature = 0.2, # Adjust the curve direction and strength
+           color = "black", 
+           size = 1) +
+ annotate("text", x = 14.6, y = 173, label = "Months Elapsed", color = "black", size = 5) +
+ annotate("text", x = 14.5, y = 197, label = "# of Geolocations", color = "black", size = 5) +
   theme_bw() +
   theme(legend.position = "bottom",
         plot.subtitle = element_text(size = 16),
@@ -296,7 +312,7 @@ ggplot(allfish_plotdata, aes(x = reorder(as.factor(id),max_river_distance_km),
                  fill = 'white')))
 
 
-# ggsave(filename = "AllFish_MaxDisplacement_Plot.png", height = 6, width = 12)
+ggsave(filename = "Plots/AllFish_MaxDisplacement_Plot_VER3.png", height = 6, width = 12)
 
 ```
 
