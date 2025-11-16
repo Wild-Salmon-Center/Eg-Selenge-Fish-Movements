@@ -271,7 +271,7 @@ ggplot(allfish_plotdata, aes(x = reorder(as.factor(id),max_river_distance_km),
   scale_y_continuous(expand = c(0,0), limits = c(0, 280), breaks = seq(0,250, by=50)) +
   labs(#title = "Fish Tracking Maximum Displacement",
        #subtitle = "Selenge/Eg Rivers",
-       y = "River KM",
+       y = "River Distance (km)",
        x = "Fish Tag ID",
        pattern = "Crossed Proposed Egiin Gol Hydroelectric Site:",
        fill = "Species:") +
@@ -281,7 +281,7 @@ ggplot(allfish_plotdata, aes(x = reorder(as.factor(id),max_river_distance_km),
   geom_text(aes(label = numb_geolocations$count), 
             vjust = -2, 
             fontface = "bold",
-            size = 3.5) +
+            size = 4) +
   theme_bw() +
   theme(legend.position = "bottom",
         plot.subtitle = element_text(size = 16),
@@ -296,7 +296,7 @@ ggplot(allfish_plotdata, aes(x = reorder(as.factor(id),max_river_distance_km),
                  fill = 'white')))
 
 
-ggsave(filename = "AllFish_MaxDisplacement_Plot.png", height = 6, width = 12)
+# ggsave(filename = "AllFish_MaxDisplacement_Plot.png", height = 6, width = 12)
 
 ```
 
