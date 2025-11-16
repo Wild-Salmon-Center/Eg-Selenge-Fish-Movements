@@ -255,19 +255,22 @@ allfish_plotdata <- read_csv("Final Data Sheets/max_river_distance_allfish.csv")
   cbind(numb_geolocations$count, months_range$whole_months) 
 
 # Create color vector for different species
-species_colors <- c("royalblue1", "yellow2", "chocolate", "olivedrab3", "white")
+#species <- c("Taimen", "Pike", "White Fish", "Lenok", "Perch")
+species_colors <- c("darkorange", "darkblue", "darkred", "darkgreen","burlywood4")
 
 # Create max displacement plot
 ggplot(allfish_plotdata, aes(x = reorder(as.factor(id),max_river_distance_km), 
                              y = max_river_distance_km, 
-                             fill = species, 
+                            # fill = species, 
                              pattern = crossed_dam)) +
   geom_col_pattern(linewidth=0.7, 
                    color = "black",
                    pattern_spacing = 0.03,
-                   pattern_fill = "gray45") +
+                   pattern_fill = "gray45", 
+                   fill = "snow3") +
   scale_pattern_manual(values = c("Yes" = "stripe", "No" = "none")) +
-  scale_fill_manual(values = species_colors) +
+ # scale_fill_manual(values = species_colors) +
+#  guides(fill = guide_legend(override.aes = list(fill = NA))) +
   scale_y_continuous(expand = c(0,0), limits = c(0, 280), breaks = seq(0,250, by=50)) +
   labs(#title = "Fish Tracking Maximum Displacement",
        #subtitle = "Selenge/Eg Rivers",
@@ -275,13 +278,16 @@ ggplot(allfish_plotdata, aes(x = reorder(as.factor(id),max_river_distance_km),
        x = "Fish Tag ID",
        pattern = "Crossed Proposed Egiin Gol Hydroelectric Site:",
        fill = "Species:") +
-  geom_text(aes(label = paste0("(",months_range$partial_months,")")), 
+  geom_text(aes(label = paste0("(",months_range$partial_months,")"), color = species), 
             vjust = -0.5,
-            size = 3.5) +
-  geom_text(aes(label = numb_geolocations$count), 
+            size = 3.5,
+            fontface = "bold") +
+  geom_text(aes(label = numb_geolocations$count, color = species), 
             vjust = -2, 
             fontface = "bold",
             size = 4) +
+ scale_color_manual(values = c("Taimen" = "darkgreen", "Pike" = "darkred", "White Fish" = "burlywood4", "Lenok" = "darkorange", "Perch" = "darkblue")) +
+ guides(color = guide_legend(override.aes = list(color = NA))) +
  annotate("curve", 
            x = 16.5, y = 170, 
            xend = 18.4, yend = 162, 
