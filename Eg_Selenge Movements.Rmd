@@ -12,8 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r Attach packages}
 # Attach packages
 
-#install.packages("pacman")
-library(pacman)
+if (!requireNamespace("pacman", quietly = TRUE)) install.packages("pacman")
 
 pacman::p_load(tidyverse, sf, readxl, riverdist, janitor, maptiles, tidyterra, ggpattern, lubridate, ggtext)
 ```
@@ -85,17 +84,17 @@ ggplot() +
 
 ```{r Load river network}
 # Load river network
-MyRivernetwork <- line2network(path ="Spatial", layer ="FlowNetwork_Final")
+river_network <- line2network(path ="Spatial", layer ="FlowNetwork_Final")
 
 # Confirm river network looks accurate
-plot(MyRivernetwork)
+plot(river_network)
 
 # Show network segments
-showends(seg=1, rivers=MyRivernetwork)
-showends(seg=2, rivers=MyRivernetwork)
+showends(seg=1, rivers=river_network)
+showends(seg=2, rivers=river_network)
 
 # Define start of river network
-riv <- setmouth(seg=1,vert=22362,rivers=MyRivernetwork)
+riv <- setmouth(seg=1,vert=22362,rivers=river_network)
 plot(riv)
 
 # Run and perform topology checks on river network
@@ -147,7 +146,7 @@ riverpoints(seg=taimen_locs$seg, vert=taimen_locs$vert, rivers=network_clean, pc
 
 ```
 
-```{r max displacement plot}
+```{r Taimen Max displacement plot}
 
 # Fish that swam between proposed Eg hydro project site
 crossed_dam_site <- c("102", "152", "153", "154", "159")
